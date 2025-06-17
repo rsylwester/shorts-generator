@@ -1,0 +1,33 @@
+[project]
+name = "shorts-generator"
+version = "0.1.0"
+description = "A tool to generate short videos with quotes and AI backgrounds"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "gradio>=4.10.0",
+    "ffmpeg-python==0.2.0",
+    "pillow>=10.4.0",
+    "fonttools==4.46.0",
+    "pydantic>=2.6.0",
+    "httpx==0.25.2",
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["src"]
+
+[tool.black]
+line-length = 88
+target-version = ['py313']
+
+[tool.isort]
+profile = "black"
+line_length = 88
+
+[tool.pylint]
+max-line-length = 88
+disable = ["C0111", "C0103"]
