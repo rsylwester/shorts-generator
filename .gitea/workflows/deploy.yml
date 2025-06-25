@@ -2,7 +2,7 @@ name: Deploy shorts-generator to Portainer
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]  # Change to main if that's your default branch
 
 jobs:
   deploy:
