@@ -11,6 +11,10 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
+      with:
+        repository: gitea/shorts-generator
+        token: ${{ secrets.GITHUB_TOKEN }}
+        ref: main
       
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -48,6 +52,21 @@ jobs:
         print(f"📍 Portainer URL: {portainer_url}")
         print(f"🎯 Endpoint ID: {endpoint_id}")
         
+        # Debug: Show current directory contents
+        print("📁 Current directory contents:")
+        import os
+        for item in os.listdir('.'):
+            print(f"  - {item}")
+        
+        # Check if Dockerfile exists
+        if os.path.exists('Dockerfile'):
+            print("✅ Dockerfile found")
+        else:
+            print("❌ Dockerfile not found!")
+            print("📁 Full directory listing:")
+            import subprocess
+            subprocess.run(['find', '.', '-name', '*ocker*'], check=False)
+        
         # Headers for API requests
         headers = {
             'X-API-Key': token,
@@ -81,7 +100,7 @@ jobs:
                 break
         
         if existing_stack:
-            # Update existing stack (Portainer 2.27.1 format)
+            # Update existing stack
             stack_id = existing_stack['Id']
             print(f"📝 Updating existing stack ID: {stack_id}")
             update_url = f"{portainer_url}/api/stacks/{stack_id}?endpointId={endpoint_id}"
@@ -102,7 +121,7 @@ jobs:
                 print(response.text)
                 sys.exit(1)
         else:
-            # Create new stack (Portainer 2.27.1 format)
+            # Create new stack
             print(f"🆕 Creating new stack: {stack_name}")
             create_url = f"{portainer_url}/api/stacks/create/standalone/string?endpointId={endpoint_id}"
             
@@ -125,3 +144,4 @@ jobs:
         print("🎉 Deployment completed!")
         
         EOF
+EOF
