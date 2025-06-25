@@ -1,0 +1,127 @@
+name: Deploy shorts-generator to Portainer
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        
+    - name: Install dependencies
+      run: |
+        pip install requests urllib3
+        
+    - name: Deploy to Portainer
+      env:
+        PORTAINER_URL: ${{ secrets.PORTAINER_URL }}
+        PORTAINER_TOKEN: ${{ secrets.PORTAINER_TOKEN }}
+        PORTAINER_ENDPOINT_ID: ${{ secrets.PORTAINER_ENDPOINT_ID }}
+        STACK_NAME: "shorts-generator"
+      run: |
+        python << 'EOF'
+        import requests
+        import json
+        import os
+        import sys
+        import urllib3
+        
+        # Disable SSL warnings if using self-signed certificates
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+        
+        # Configuration
+        portainer_url = os.environ['PORTAINER_URL']
+        token = os.environ['PORTAINER_TOKEN']
+        endpoint_id = os.environ['PORTAINER_ENDPOINT_ID']
+        stack_name = os.environ['STACK_NAME']
+        
+        print(f"🚀 Deploying {stack_name} to Portainer...")
+        print(f"📍 Portainer URL: {portainer_url}")
+        print(f"🎯 Endpoint ID: {endpoint_id}")
+        
+        # Headers for API requests
+        headers = {
+            'X-API-Key': token,
+            'Content-Type': 'application/json'
+        }
+        
+        # Read docker-compose.yml
+        try:
+            with open('docker-compose.yml', 'r') as f:
+                compose_content = f.read()
+            print("✅ docker-compose.yml loaded successfully")
+        except FileNotFoundError:
+            print("❌ docker-compose.yml not found!")
+            sys.exit(1)
+        
+        # Check if stack exists
+        stacks_url = f"{portainer_url}/api/stacks"
+        response = requests.get(stacks_url, headers=headers, verify=False)
+        
+        if response.status_code != 200:
+            print(f"❌ Failed to get stacks: {response.status_code}")
+            print(response.text)
+            sys.exit(1)
+        
+        stacks = response.json()
+        existing_stack = None
+        
+        for stack in stacks:
+            if stack['Name'] == stack_name:
+                existing_stack = stack
+                break
+        
+        if existing_stack:
+            # Update existing stack
+            stack_id = existing_stack['Id']
+            print(f"📝 Updating existing stack ID: {stack_id}")
+            update_url = f"{portainer_url}/api/stacks/{stack_id}?endpointId={endpoint_id}"
+            
+            update_data = {
+                "stackFileContent": compose_content,
+                "env": [],
+                "prune": True
+            }
+            
+            response = requests.put(update_url, headers=headers, json=update_data, verify=False)
+            
+            if response.status_code == 200:
+                print(f"✅ Stack '{stack_name}' updated successfully!")
+                print(f"🌐 Your app should be running at: http://devserver:7860")
+            else:
+                print(f"❌ Failed to update stack: {response.status_code}")
+                print(response.text)
+                sys.exit(1)
+        else:
+            # Create new stack
+            print(f"🆕 Creating new stack: {stack_name}")
+            create_url = f"{portainer_url}/api/stacks?type=2&method=string&endpointId={endpoint_id}"
+            
+            create_data = {
+                "name": stack_name,
+                "stackFileContent": compose_content,
+                "env": []
+            }
+            
+            response = requests.post(create_url, headers=headers, json=create_data, verify=False)
+            
+            if response.status_code == 200:
+                print(f"✅ Stack '{stack_name}' created successfully!")
+                print(f"🌐 Your app should be running at: http://devserver:7860")
+            else:
+                print(f"❌ Failed to create stack: {response.status_code}")
+                print(response.text)
+                sys.exit(1)
+        
+        print("🎉 Deployment completed!")
+        
+        EOF

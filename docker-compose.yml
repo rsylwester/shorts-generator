@@ -7,8 +7,8 @@ services:
     ports:
       - "7860:7860"
     volumes:
-      - /opt/shorts-generator/output:/app/output
-      - /opt/shorts-generator/data:/app/data
+      - ./shorts-generator/output:/app/output
+      - ./shorts-generator/data:/app/data
     environment:
       - PYTHONUNBUFFERED=1
     restart: unless-stopped
