@@ -2,7 +2,7 @@ name: Deploy shorts-generator to Portainer
 
 on:
   push:
-    branches: [ main ]  # Change to main if that's your default branch
+    branches: [ main ]
 
 jobs:
   deploy:
@@ -35,7 +35,7 @@ jobs:
         import sys
         import urllib3
         
-        # Disable SSL warnings if using self-signed certificates
+        # Disable SSL warnings
         urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
         
         # Configuration
@@ -81,7 +81,7 @@ jobs:
                 break
         
         if existing_stack:
-            # Update existing stack
+            # Update existing stack (Portainer 2.27.1 format)
             stack_id = existing_stack['Id']
             print(f"📝 Updating existing stack ID: {stack_id}")
             update_url = f"{portainer_url}/api/stacks/{stack_id}?endpointId={endpoint_id}"
@@ -96,15 +96,15 @@ jobs:
             
             if response.status_code == 200:
                 print(f"✅ Stack '{stack_name}' updated successfully!")
-                print(f"🌐 Your app should be running at: http://devserver:7860")
+                print(f"🌐 Your app should be running at: http://192.168.50.205:7860")
             else:
                 print(f"❌ Failed to update stack: {response.status_code}")
                 print(response.text)
                 sys.exit(1)
         else:
-            # Create new stack
+            # Create new stack (Portainer 2.27.1 format)
             print(f"🆕 Creating new stack: {stack_name}")
-            create_url = f"{portainer_url}/api/stacks?type=2&method=string&endpointId={endpoint_id}"
+            create_url = f"{portainer_url}/api/stacks/create/standalone/string?endpointId={endpoint_id}"
             
             create_data = {
                 "name": stack_name,
@@ -114,12 +114,12 @@ jobs:
             
             response = requests.post(create_url, headers=headers, json=create_data, verify=False)
             
-            if response.status_code == 200:
+            if response.status_code in [200, 201]:
                 print(f"✅ Stack '{stack_name}' created successfully!")
-                print(f"🌐 Your app should be running at: http://devserver:7860")
+                print(f"🌐 Your app should be running at: http://192.168.50.205:7860")
             else:
                 print(f"❌ Failed to create stack: {response.status_code}")
-                print(response.text)
+                print(f"Response: {response.text}")
                 sys.exit(1)
         
         print("🎉 Deployment completed!")
