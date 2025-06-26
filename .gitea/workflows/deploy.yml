@@ -78,18 +78,58 @@ jobs:
             # Check if it's a Git-based stack
             git_config = existing_stack.get('GitConfig')
             if git_config:
-                print(f"✅ Stack is Git-based, attempting Git update...")
-                # Try Git redeploy
-                redeploy_url = f"{portainer_url}/api/stacks/{stack_id}/git/redeploy?endpointId={endpoint_id}"
-                response = requests.post(redeploy_url, headers=headers, verify=False)
+                print(f"✅ Stack is Git-based, trying different Git update methods...")
                 
-                if response.status_code == 200:
-                    print(f"✅ Stack '{stack_name}' redeployed successfully!")
-                    print(f"🌐 Your app should be running at: http://192.168.50.205:7860")
-                else:
-                    print(f"❌ Git redeploy failed: {response.status_code}")
-                    print(f"Response: {response.text}")
-                    sys.exit(1)
+                # Try different Git update endpoints for Portainer 2.27.1
+                git_endpoints = [
+                    f"{portainer_url}/api/stacks/{stack_id}/git/redeploy?endpointId={endpoint_id}",
+                    f"{portainer_url}/api/stacks/{stack_id}/git?endpointId={endpoint_id}",
+                    f"{portainer_url}/api/stacks/{stack_id}/git/pull?endpointId={endpoint_id}",
+                    f"{portainer_url}/api/stacks/{stack_id}/redeploy?endpointId={endpoint_id}"
+                ]
+                
+                success = False
+                for endpoint in git_endpoints:
+                    print(f"🔄 Trying Git endpoint: {endpoint}")
+                    response = requests.post(endpoint, headers=headers, verify=False)
+                    
+                    if response.status_code == 200:
+                        print(f"✅ Stack '{stack_name}' updated via Git successfully!")
+                        print(f"🌐 Your app should be running at: http://192.168.50.205:7860")
+                        success = True
+                        break
+                    else:
+                        print(f"❌ Failed with {response.status_code}: {response.text}")
+                
+                if not success:
+                    print(f"⚠️ All Git update methods failed, falling back to regular update...")
+                    
+                    # Read docker-compose.yml for fallback update
+                    try:
+                        with open('docker-compose.yml', 'r') as f:
+                            compose_content = f.read()
+                        print("✅ docker-compose.yml loaded for fallback update")
+                    except FileNotFoundError:
+                        print("❌ docker-compose.yml not found!")
+                        sys.exit(1)
+                    
+                    # Fallback to regular stack update
+                    update_url = f"{portainer_url}/api/stacks/{stack_id}?endpointId={endpoint_id}"
+                    update_data = {
+                        "stackFileContent": compose_content,
+                        "env": [],
+                        "prune": True
+                    }
+                    
+                    response = requests.put(update_url, headers=headers, json=update_data, verify=False)
+                    
+                    if response.status_code == 200:
+                        print(f"✅ Stack '{stack_name}' updated via fallback method!")
+                        print(f"🌐 Your app should be running at: http://192.168.50.205:7860")
+                    else:
+                        print(f"❌ Fallback update failed: {response.status_code}")
+                        print(f"Response: {response.text}")
+                        sys.exit(1)
             else:
                 print(f"⚠️ Stack is not Git-based, deleting and recreating as Git stack...")
                 
