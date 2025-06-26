@@ -72,33 +72,62 @@ jobs:
                 break
         
         if existing_stack:
-            # Update existing stack via Git
             stack_id = existing_stack['Id']
-            print(f"📝 Updating existing stack ID: {stack_id} via Git pull...")
+            print(f"📝 Found existing stack ID: {stack_id}")
             
-            # For Git-based stacks, we need to trigger a Git pull/redeploy
-            redeploy_url = f"{portainer_url}/api/stacks/{stack_id}/git/redeploy?endpointId={endpoint_id}"
-            
-            response = requests.post(redeploy_url, headers=headers, verify=False)
-            
-            if response.status_code == 200:
-                print(f"✅ Stack '{stack_name}' redeployed successfully!")
-                print(f"🌐 Your app should be running at: http://192.168.50.205:7860")
-            else:
-                print(f"❌ Failed to redeploy stack: {response.status_code}")
-                print(response.text)
-                # Fall back to manual update if redeploy fails
-                print("🔄 Falling back to manual Git update...")
-                update_url = f"{portainer_url}/api/stacks/{stack_id}/git?endpointId={endpoint_id}"
-                response = requests.post(update_url, headers=headers, verify=False)
+            # Check if it's a Git-based stack
+            git_config = existing_stack.get('GitConfig')
+            if git_config:
+                print(f"✅ Stack is Git-based, attempting Git update...")
+                # Try Git redeploy
+                redeploy_url = f"{portainer_url}/api/stacks/{stack_id}/git/redeploy?endpointId={endpoint_id}"
+                response = requests.post(redeploy_url, headers=headers, verify=False)
+                
                 if response.status_code == 200:
-                    print(f"✅ Stack '{stack_name}' updated successfully!")
+                    print(f"✅ Stack '{stack_name}' redeployed successfully!")
+                    print(f"🌐 Your app should be running at: http://192.168.50.205:7860")
                 else:
-                    print(f"❌ Failed to update stack: {response.status_code}")
+                    print(f"❌ Git redeploy failed: {response.status_code}")
+                    print(f"Response: {response.text}")
+                    sys.exit(1)
+            else:
+                print(f"⚠️ Stack is not Git-based, deleting and recreating as Git stack...")
+                
+                # Delete the existing non-Git stack
+                delete_url = f"{portainer_url}/api/stacks/{stack_id}?endpointId={endpoint_id}"
+                response = requests.delete(delete_url, headers=headers, verify=False)
+                
+                if response.status_code in [200, 204]:
+                    print(f"✅ Old stack deleted successfully")
+                else:
+                    print(f"❌ Failed to delete old stack: {response.status_code}")
+                    print(f"Response: {response.text}")
+                    sys.exit(1)
+                
+                # Create new Git-based stack
+                print(f"🆕 Creating new Git-based stack: {stack_name}")
+                create_url = f"{portainer_url}/api/stacks/create/standalone/repository?endpointId={endpoint_id}"
+                
+                create_data = {
+                    "name": stack_name,
+                    "repositoryURL": "http://192.168.50.205:3000/gitea/shorts-generator.git",
+                    "repositoryReferenceName": "refs/heads/main",
+                    "composeFile": "docker-compose.yml",
+                    "env": []
+                }
+                
+                response = requests.post(create_url, headers=headers, json=create_data, verify=False)
+                
+                if response.status_code in [200, 201]:
+                    print(f"✅ New Git-based stack '{stack_name}' created successfully!")
+                    print(f"🌐 Your app should be running at: http://192.168.50.205:7860")
+                else:
+                    print(f"❌ Failed to create Git-based stack: {response.status_code}")
+                    print(f"Response: {response.text}")
                     sys.exit(1)
         else:
-            # Create new stack from Git repository
-            print(f"🆕 Creating new stack from Git: {stack_name}")
+            # Create new Git-based stack
+            print(f"🆕 Creating new Git-based stack: {stack_name}")
             create_url = f"{portainer_url}/api/stacks/create/standalone/repository?endpointId={endpoint_id}"
             
             create_data = {
@@ -112,10 +141,10 @@ jobs:
             response = requests.post(create_url, headers=headers, json=create_data, verify=False)
             
             if response.status_code in [200, 201]:
-                print(f"✅ Stack '{stack_name}' created from Git successfully!")
+                print(f"✅ Git-based stack '{stack_name}' created successfully!")
                 print(f"🌐 Your app should be running at: http://192.168.50.205:7860")
             else:
-                print(f"❌ Failed to create stack from Git: {response.status_code}")
+                print(f"❌ Failed to create Git-based stack: {response.status_code}")
                 print(f"Response: {response.text}")
                 sys.exit(1)
         
