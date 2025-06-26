@@ -103,7 +103,7 @@ jobs:
             
             create_data = {
                 "name": stack_name,
-                "repositoryURL": "http://devserver:3000/gitea/shorts-generator.git",
+                "repositoryURL": "http://192.168.50.205:3000/gitea/shorts-generator.git",
                 "repositoryReferenceName": "refs/heads/main",
                 "composeFile": "docker-compose.yml",
                 "env": []
