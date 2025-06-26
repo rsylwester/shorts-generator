@@ -31,11 +31,13 @@ COPY . /app
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync
 
-# Copy data directory with all static assets
-COPY data /app/data
-
 # Create output directory
 RUN mkdir -p output
+
+# Ensure data directory has all subdirectories
+RUN ls -la /app/data/ && \
+    ls -la /app/data/backgrounds/ || echo "No backgrounds directory" && \
+    ls -la /app/data/audio/ || echo "No audio directory"
 
 # Expose port for Gradio
 EXPOSE 7860
