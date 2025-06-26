@@ -22,12 +22,13 @@ class VideoGenerator:
         self.output_dir = Path("output")
         self.output_dir.mkdir(exist_ok=True)
         
-        # Resource paths
-        self.background_1_path = "data/backgrounds/background_1.jpg"
-        self.background_2_path = "data/backgrounds/background_2.jpg"
-        self.lotus_icon_path = "data/icons/lotus.png"
-        self.meditation_icon_path = "data/icons/meditation.png"
-        self.background_music_path = "data/audio/background-music-1.mp3"
+        # Resource paths - resolve absolute paths
+        base_dir = Path.cwd()
+        self.background_1_path = str(base_dir / "data/backgrounds/background_1.jpg")
+        self.background_2_path = str(base_dir / "data/backgrounds/background_2.jpg")
+        self.lotus_icon_path = str(base_dir / "data/icons/lotus.png")
+        self.meditation_icon_path = str(base_dir / "data/icons/meditation.png")
+        self.background_music_path = str(base_dir / "data/audio/background-music-1.mp3")
     
     def create_video(self, quote: Quote) -> GeneratedVideo:
         """Create a complete video from a quote."""
