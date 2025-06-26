@@ -31,7 +31,10 @@ COPY . /app
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync
 
-# Create output directory (data will be mounted from host)
+# Copy data directory with all static assets
+COPY data /app/data
+
+# Create output directory
 RUN mkdir -p output
 
 # Expose port for Gradio
