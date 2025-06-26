@@ -147,6 +147,13 @@ output/
 *.jpeg
 data/quotes/*.db
 temp/
+
+# Allow data directory files
+!data/**/*.mp3
+!data/**/*.png
+!data/**/*.jpg
+!data/**/*.jpeg
+!data/**/*.ttf
 app.log
 .ai/
 .astro/

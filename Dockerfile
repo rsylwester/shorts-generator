@@ -34,10 +34,8 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # Create output directory
 RUN mkdir -p output
 
-# Ensure data directory has all subdirectories
-RUN ls -la /app/data/ && \
-    ls -la /app/data/backgrounds/ || echo "No backgrounds directory" && \
-    ls -la /app/data/audio/ || echo "No audio directory"
+# Verify data files are present
+RUN python verify_data.py
 
 # Expose port for Gradio
 EXPOSE 7860
