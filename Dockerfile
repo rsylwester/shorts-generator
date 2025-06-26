@@ -31,8 +31,8 @@ COPY . /app
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync
 
-# Create necessary directories
-RUN mkdir -p output data/quotes
+# Create output directory (data will be mounted from host)
+RUN mkdir -p output
 
 # Expose port for Gradio
 EXPOSE 7860
