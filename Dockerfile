@@ -35,7 +35,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 RUN mkdir -p output
 
 # Verify data files are present
-RUN python verify_data.py
+RUN ls -la /app/data/ && python verify_data.py
 
 # Expose port for Gradio
 EXPOSE 7860

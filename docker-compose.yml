@@ -8,7 +8,6 @@ services:
       - "7860:7860"
     volumes:
       - ./output:/app/output
-      - ./data:/app/data:rw
     environment:
       - PYTHONUNBUFFERED=1
     restart: unless-stopped
