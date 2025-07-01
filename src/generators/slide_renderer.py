@@ -120,7 +120,7 @@ class SlideRenderer:
         # Author
         author_font_size = 40
         author_font = ImageFont.truetype(self.font_path, author_font_size) if self.font_path else ImageFont.load_default()
-        author_text = f"— {author}"
+        author_text = f"~{author}~"
         author_bbox = author_font.getbbox(author_text)
         author_width = author_bbox[2] - author_bbox[0]
         author_x = (self.width - author_width) // 2
