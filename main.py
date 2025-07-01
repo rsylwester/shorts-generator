@@ -131,35 +131,8 @@ def main():
         gr.Markdown("# 📱 ShortsGenerator MVP")
         gr.Markdown("Automatyczne generowanie 12-sekundowych filmów z cytatami medytacyjnymi")
         
-        with gr.Tabs(selected=1):
-            # Tab 1: Upload CSV
-            with gr.TabItem("📁 Wgrywanie Cytatów"):
-                gr.Markdown("### Wgraj plik CSV z cytatami")
-                gr.Markdown("**Format CSV:** ID, QUOTE, AUTHOR, REFLECTION, SOCIAL_MEDIA_POST, STATUS")
-                
-                with gr.Row():
-                    with gr.Column():
-                        csv_file = gr.File(
-                            label="Wybierz plik CSV",
-                            file_types=[".csv"],
-                            file_count="single"
-                        )
-                        upload_btn = gr.Button("📤 Wgraj Cytaty", variant="primary")
-                    
-                    with gr.Column():
-                        upload_status = gr.Textbox(
-                            label="Status wgrywania",
-                            interactive=False,
-                            lines=3
-                        )
-                
-                upload_btn.click(
-                    fn=upload_csv,
-                    inputs=[csv_file],
-                    outputs=[upload_status]
-                )
-            
-            # Tab 2: Generate Video
+        with gr.Tabs():
+            # Tab 1: Generate Video (moved to be first)
             with gr.TabItem("🎬 Generowanie Wideo"):
                 gr.Markdown("### Generuj wideo z losowym cytatem")
                 
@@ -231,6 +204,33 @@ def main():
                 app.load(
                     fn=get_database_stats,
                     outputs=[db_stats]
+                )
+            
+            # Tab 2: Upload CSV
+            with gr.TabItem("📁 Wgrywanie Cytatów"):
+                gr.Markdown("### Wgraj plik CSV z cytatami")
+                gr.Markdown("**Format CSV:** ID, QUOTE, AUTHOR, REFLECTION, SOCIAL_MEDIA_POST, STATUS")
+                
+                with gr.Row():
+                    with gr.Column():
+                        csv_file = gr.File(
+                            label="Wybierz plik CSV",
+                            file_types=[".csv"],
+                            file_count="single"
+                        )
+                        upload_btn = gr.Button("📤 Wgraj Cytaty", variant="primary")
+                    
+                    with gr.Column():
+                        upload_status = gr.Textbox(
+                            label="Status wgrywania",
+                            interactive=False,
+                            lines=3
+                        )
+                
+                upload_btn.click(
+                    fn=upload_csv,
+                    inputs=[csv_file],
+                    outputs=[upload_status]
                 )
         
         gr.Markdown("---")
