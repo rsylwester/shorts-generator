@@ -5,9 +5,10 @@ from .quote import Quote
 class VideoSpecs(BaseModel):
     width: int = 1080
     height: int = 1920
-    duration: float = 12.0
+    duration: float = 15.0
     fps: int = 30
     slide_duration: float = 6.0
+    slide_3_duration: float = 3.0
     transition_duration: float = 1.0
     
 class VideoSettings(BaseModel):

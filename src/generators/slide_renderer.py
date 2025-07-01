@@ -204,6 +204,25 @@ class SlideRenderer:
         result = Image.alpha_composite(background, overlay)
         return result.convert('RGB')
     
+    def render_slide_3(self, background_path: str) -> Image.Image:
+        """Render slide 3: Final slide with background only (text from the provided image)."""
+        logger.info(f"Rendering slide 3 with background: {background_path}")
+        
+        # Load background
+        try:
+            background = Image.open(background_path).convert('RGBA')
+            logger.info(f"Background loaded: {background.size}")
+            background = background.resize((self.width, self.height), Image.Resampling.LANCZOS)
+            logger.info(f"Background resized to: {background.size}")
+        except Exception as e:
+            logger.error(f"Failed to load background: {e}")
+            # Create fallback background
+            background = Image.new('RGBA', (self.width, self.height), (50, 50, 50, 255))
+            logger.info("Created fallback background")
+        
+        # Return the background as-is since it already contains the text
+        return background.convert('RGB')
+    
     def add_watermark(self, image: Image.Image, text: str = "jakmedytowac.pl") -> Image.Image:
         """Add watermark to image."""
         watermark_overlay = Image.new('RGBA', image.size, (0, 0, 0, 0))

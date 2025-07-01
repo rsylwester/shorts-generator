@@ -26,9 +26,10 @@ class VideoGenerator:
         base_dir = Path.cwd()
         self.background_1_path = str(base_dir / "data/backgrounds/background_1.jpg")
         self.background_2_path = str(base_dir / "data/backgrounds/background_2.jpg")
+        self.background_3_path = str(base_dir / "data/backgrounds/background_3.jpg")
         self.lotus_icon_path = str(base_dir / "data/icons/lotus.png")
         self.meditation_icon_path = str(base_dir / "data/icons/meditation.png")
-        self.background_music_path = str(base_dir / "data/audio/background-music-1.mp3")
+        self.background_music_path = str(base_dir / "data/audio/background-music-18s.mp3")
     
     def create_video(self, quote: Quote) -> GeneratedVideo:
         """Create a complete video from a quote."""
@@ -44,6 +45,7 @@ class VideoGenerator:
         # Check if background images exist
         logger.info(f"Checking background 1: {self.background_1_path} - exists: {os.path.exists(self.background_1_path)}")
         logger.info(f"Checking background 2: {self.background_2_path} - exists: {os.path.exists(self.background_2_path)}")
+        logger.info(f"Checking background 3: {self.background_3_path} - exists: {os.path.exists(self.background_3_path)}")
         logger.info(f"Checking lotus icon: {self.lotus_icon_path} - exists: {os.path.exists(self.lotus_icon_path)}")
         logger.info(f"Checking meditation icon: {self.meditation_icon_path} - exists: {os.path.exists(self.meditation_icon_path)}")
         logger.info(f"Checking background music: {self.background_music_path} - exists: {os.path.exists(self.background_music_path)}")
@@ -78,11 +80,19 @@ class VideoGenerator:
                 slide_2.save(slide_2_path)
                 logger.info(f"Slide 2 saved: {slide_2_path} (size: {slide_2.size})")
                 
+                logger.info("Rendering slide 3...")
+                slide_3 = self.renderer.render_slide_3(self.background_3_path)
+                slide_3 = self.renderer.add_watermark(slide_3)
+                slide_3_path = temp_path / "slide_3.png"
+                slide_3.save(slide_3_path)
+                logger.info(f"Slide 3 saved: {slide_3_path} (size: {slide_3.size})")
+                
                 # Create video with FFmpeg
                 logger.info("Creating video with FFmpeg...")
                 self._create_video_with_ffmpeg(
                     slide_1_path, 
-                    slide_2_path, 
+                    slide_2_path,
+                    slide_3_path,
                     output_path
                 )
                 
@@ -109,33 +119,47 @@ class VideoGenerator:
             logger.error(f"Video generation failed: {str(e)}")
             raise Exception(f"Video generation failed: {str(e)}")
     
-    def _create_video_with_ffmpeg(self, slide_1_path: Path, slide_2_path: Path, output_path: Path):
+    def _create_video_with_ffmpeg(self, slide_1_path: Path, slide_2_path: Path, slide_3_path: Path, output_path: Path):
         """Create video using FFmpeg with slides and smooth cross-fade transition."""
-        logger.info(f"FFmpeg creating video from {slide_1_path} and {slide_2_path}")
-        logger.info(f"Slide 1 exists: {slide_1_path.exists()}, Slide 2 exists: {slide_2_path.exists()}")
+        logger.info(f"FFmpeg creating video from {slide_1_path}, {slide_2_path}, and {slide_3_path}")
+        logger.info(f"Slide 1 exists: {slide_1_path.exists()}, Slide 2 exists: {slide_2_path.exists()}, Slide 3 exists: {slide_3_path.exists()}")
         
         try:
-            # Calculate timing for cross-fade
-            # With xfade, total duration = slide1_duration + slide2_duration - transition_duration
-            # So to get 12s total, we need: slide1_duration + slide2_duration - 1.0 = 12
-            # Therefore: slide1_duration + slide2_duration = 13
-            slide_1_duration = 6.5  # First slide slightly longer
-            slide_2_duration = 6.5  # Second slide slightly longer
-            transition_start = slide_1_duration - self.specs.transition_duration
+            # Calculate timing for cross-fade with 3 slides
+            # Total duration = 15s
+            # With two transitions of 1s each, we need:
+            # slide_1_duration + slide_2_duration + slide_3_duration - 2 * transition_duration = 15
+            # 6.5 + 6.5 + 4 - 2 = 15
+            slide_1_duration = 6.5
+            slide_2_duration = 6.5
+            slide_3_duration = 4.0
+            transition_1_start = slide_1_duration - self.specs.transition_duration
+            transition_2_start = slide_1_duration + slide_2_duration - 2 * self.specs.transition_duration
             
             # Create input streams
-            logger.info(f"Creating input streams with cross-fade transition")
+            logger.info(f"Creating input streams with cross-fade transitions")
             slide_1_input = ffmpeg.input(str(slide_1_path), loop=1, t=slide_1_duration)
             slide_2_input = ffmpeg.input(str(slide_2_path), loop=1, t=slide_2_duration)
+            slide_3_input = ffmpeg.input(str(slide_3_path), loop=1, t=slide_3_duration)
             
-            # Create cross-fade effect using xfade filter
-            logger.info(f"Applying cross-fade transition (duration: {self.specs.transition_duration}s)")
-            video = ffmpeg.filter(
+            # Create first cross-fade between slide 1 and 2
+            logger.info(f"Applying first cross-fade transition at {transition_1_start}s")
+            video_1_2 = ffmpeg.filter(
                 [slide_1_input, slide_2_input], 
                 'xfade', 
                 transition='fade',
                 duration=self.specs.transition_duration,
-                offset=transition_start
+                offset=transition_1_start
+            )
+            
+            # Create second cross-fade between result and slide 3
+            logger.info(f"Applying second cross-fade transition at {transition_2_start}s")
+            video = ffmpeg.filter(
+                [video_1_2, slide_3_input], 
+                'xfade', 
+                transition='fade',
+                duration=self.specs.transition_duration,
+                offset=transition_2_start
             )
             
             # Add background music if available
