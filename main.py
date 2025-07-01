@@ -131,7 +131,7 @@ def main():
         gr.Markdown("# 📱 ShortsGenerator MVP")
         gr.Markdown("Automatyczne generowanie 12-sekundowych filmów z cytatami medytacyjnymi")
         
-        with gr.Tabs():
+        with gr.Tabs(selected=1):
             # Tab 1: Upload CSV
             with gr.TabItem("📁 Wgrywanie Cytatów"):
                 gr.Markdown("### Wgraj plik CSV z cytatami")
