@@ -106,10 +106,10 @@ def generate_video():
         logger.info("Video generation process completed")
 
 def copy_social_media_text(text):
-    """Return text for copying (Gradio handles clipboard)."""
+    """Return text for copying."""
     if text:
-        return "📋 Tekst skopiowany do schowka!"
-    return "❌ Brak tekstu do skopiowania"
+        return gr.update(value="✅ Tekst skopiowany do schowka!", visible=True)
+    return gr.update(value="❌ Brak tekstu do skopiowania", visible=True)
 
 def main():
     # Custom CSS for dark theme
@@ -207,7 +207,7 @@ def main():
                         copy_status = gr.Textbox(
                             label="Status kopiowania",
                             interactive=False,
-                            visible=False
+                            visible=True
                         )
                 
                 # Event handlers
@@ -220,6 +220,11 @@ def main():
                     fn=copy_social_media_text,
                     inputs=[social_media_text],
                     outputs=[copy_status]
+                ).then(
+                    fn=None,
+                    inputs=[social_media_text],
+                    outputs=[],
+                    js="(text) => navigator.clipboard.writeText(text)"
                 )
                 
                 # Auto-refresh stats when page loads
