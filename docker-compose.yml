@@ -8,7 +8,7 @@ services:
       - "7860:7860"
     volumes:
       - ./output:/app/output
-      - ./data/quotes:/app/data/quotes
+      - quotes_data:/app/data/quotes
     environment:
       - PYTHONUNBUFFERED=1
     restart: unless-stopped
@@ -16,6 +16,11 @@ services:
       - shorts-network
     mem_limit: 2g
     cpus: '1.0'
+
+volumes:
+  quotes_data:
+    name: shorts_generator_quotes_data
+    external: false
 
 networks:
   shorts-network:

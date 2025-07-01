@@ -118,7 +118,7 @@ jobs:
                     update_data = {
                         "stackFileContent": compose_content,
                         "env": [],
-                        "prune": True
+                        "prune": False
                     }
                     
                     response = requests.put(update_url, headers=headers, json=update_data, verify=False)
